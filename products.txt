@@ -1,0 +1,4 @@
+123456;Bar One Chocolate 40g;15.00
+789012;Nosh Chocolate Bar 40g;15.00
+345678;Twix Chocolate Bar 40g;15.00
+112233;Coke Original Taste 330ml Can;12.00

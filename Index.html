@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Self-Help Point of Sale</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+    }
+    select, input[type="text"], button {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    #total {
+      font-size: 18px;
+      font-weight: bold;
+      text-align: center;
+      margin-top: 20px;
+    }
+    .tooltip {
+      position: relative;
+      display: inline-block;
+    }
+    .tooltip .tooltiptext {
+      visibility: hidden;
+      width: 160px;
+      background-color: #555;
+      color: #fff;
+      text-align: center;
+      border-radius: 6px;
+      padding: 5px 0;
+      position: absolute;
+      z-index: 1;
+      bottom: 125%;
+      left: 50%;
+      margin-left: -80px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .tooltip:hover .tooltiptext {
+      visibility: visible;
+      opacity: 1;
+    }
+    .error {
+      color: red;
+      font-size: 14px;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Self-Help Point of Sale</h1>
+    <form id="posForm">
+      <!-- Dropdown list with predefined names -->
+      <div class="tooltip">
+        <label for="name">Name:</label>
+        <select id="name" name="name" required>
+          <option value="" disabled selected>Select name from Dropdown</option>
+          <!-- Add predefined names here -->
+          <option value="Anel">Anel</option>
+          <option value="Karl">Karl</option>
+          <option value="JP">JP</option>
+        </select>
+        <span class="tooltiptext">Select your name from the dropdown list.</span>
+      </div>
+      
+      <!-- Product field for entering/scanning barcode -->
+      <label for="barcode">Product:</label>
+      <input type="text" id="barcode" name="barcode" placeholder="Enter/Scan barcode" required>
+      <div id="productError" class="error"></div>
+      
+      <!-- Buttons for Submit Order and Clear -->
+      <button type="submit" onclick="submitOrder()">Submit Order</button>
+      <button type="button" onclick="clearForm()">Clear</button>
+    </form>
+    <div id="total"></div>
+    <div id="message"></div>
+  </div>
+
+  <script>
+    // Function to clear the form
+    function clearForm() {
+      document.getElementById("posForm").reset();
+      document.getElementById("message").innerText = "";
+      document.getElementById("total").innerText = "";
+      document.getElementById("productError").innerText = "";
+    }
+
+    // Function to submit order
+    function submitOrder() {
+      var formData = new FormData(document.getElementById("posForm"));
+      var data = {};
+      formData.forEach(function(value, key) {
+        data[key] = value;
+      });
+
+      // You can perform any necessary validation here before sending the order
+      if (!data.name || !data.barcode) {
+        document.getElementById("message").innerText = "Please fill in all fields.";
+        return;
+      }
+
+      // Call Google Apps Script function to append data to Google Sheets
+      google.script.run.withSuccessHandler(function(response) {
+        document.getElementById("message").innerText = response;
+        document.getElementById("total").innerText = "";
+      }).addData(data);
+
+      // Clear form fields after successful submission
+      clearForm();
+    }
+
+    // Function to validate product barcode
+    document.getElementById("barcode").addEventListener("change", function() {
+      var barcode = this.value;
+      var products = <?php include 'products.txt'; ?>; // Read products from local text file
+      var productDetails = products.split(';'); // Split by semi-colon
+      var found = false;
+      for (var i = 0; i < productDetails.length; i += 3) {
+        if (barcode === productDetails[i]) {
+          found = true;
+          document.getElementById("total").innerText = "Total: ZAR " + productDetails[i + 2];
+          break;
+        }
+      }
+      if (!found) {
+        document.getElementById("productError").innerText = "Product not found.";
+        document.getElementById("total").innerText = "";
+      } else {
+        document.getElementById("productError").innerText = "";
+      }
+    });
+  </script>
+</body>
+</html>
